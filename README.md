@@ -6,22 +6,9 @@ Workspace manager for the terminal
 Build
 -----
 
-This application depends on the following libraries:
-
-* [ftxui](https://github.com/ArthurSonzogni/FTXUI)
-
-You can build this application with:
-
 ```bash
-git clone git@github.com:blinxen/workspacer.git
-cd workspacer/
-mkdir build
-cmake -S . -B build/
-make -C build/
+cargo build --release
 ```
-
-After building, you should be able to find the binary called `workspacer` in
-the `build` directory.
 
 Configuration
 -------------
@@ -29,12 +16,16 @@ Configuration
 The configuration file is held very minimal and looks like this:
 
 ```
-editor=/usr/bin/hx
-workspaces=$HOME/.config/workspacer/workspaces
+command=/usr/bin/hx
+workspaces=/home/foo/.config/workspacer/workspaces
 ```
 
 Each configuration option is written on a single line.
 The equals sign (`=`) is used to separate the configuration from its value.
+
+By default, `vim` is called once a project is selected.
+
+### Workspaces
 
 The workspaces file is composed of absolute paths to the respective workspace.
 A workspace, for now, is considered a single directory.
