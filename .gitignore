@@ -1,3 +1,4 @@
-/build/
+/target/
 /config
 /workspaces
+Cargo.lock
