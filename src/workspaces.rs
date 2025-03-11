@@ -1,16 +1,21 @@
-use std::{
-    fs::OpenOptions,
-    io::{BufRead, BufReader},
-    path::Path,
-    process::Command,
-};
+use std::fmt;
+use std::fs::OpenOptions;
+use std::io::{BufRead, BufReader};
+use std::path::Path;
+use std::process::Command;
 
 use crate::{config::Config, terminal};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Workspace {
     pub title: String,
     pub path: String,
+}
+
+impl fmt::Display for Workspace {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.path)
+    }
 }
 
 pub fn read_workspaces(path: &str) -> Vec<Workspace> {

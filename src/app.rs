@@ -9,7 +9,6 @@ use crate::workspaces::{self, Workspace};
 use crate::{terminal, utils};
 
 pub struct App {
-    log_message: String,
     workspaces: Vec<Workspace>,
     config: Config,
     selected_workspace: usize,
@@ -20,7 +19,6 @@ impl App {
     pub fn new() -> Self {
         let config = Config::read();
         App {
-            log_message: String::new(),
             workspaces: workspaces::read_workspaces(&config.workspaces),
             config,
             selected_workspace: 0,
@@ -46,7 +44,7 @@ impl App {
                 .saturating_sub(area.height as usize - 1)
         };
 
-        utils::border(&area, "workspacer")?;
+        utils::border(&area, "WORKSPACER")?;
         let workspaces_to_render = self
             .workspaces
             .iter()
@@ -69,7 +67,6 @@ impl App {
             stdout().queue(PrintStyledContent(styled_workspace))?;
         }
 
-        // Make sure everything is drawn before waiting for key event
         stdout().flush()?;
 
         Ok(())
@@ -79,14 +76,15 @@ impl App {
         match code {
             KeyCode::Char('q') => self.quit = true,
             KeyCode::Enter => {
-                if workspaces::exec_workspace(
-                    &self.config,
-                    self.workspaces.get(self.selected_workspace),
-                )
-                .is_err()
-                {
-                    self.log_message
-                        .push_str("An error occured while executing the workspace");
+                let workspace = self.workspaces.get(self.selected_workspace);
+                if let Err(error) = workspaces::exec_workspace(&self.config, workspace) {
+                    eprintln!(
+                        "An error occured while executing \"{}\" with workspace \"{}\"",
+                        self.config.command,
+                        workspace.unwrap_or(&Workspace::default())
+                    );
+                    eprintln!("{}", error);
+                    std::process::exit(1);
                 };
             }
             KeyCode::Up => {
