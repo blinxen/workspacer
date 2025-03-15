@@ -1,10 +1,12 @@
 use std::io::{stdout, Error as IOError, Write};
 
+use crossterm::cursor::MoveTo;
 use crossterm::event::KeyCode;
-use crossterm::style::{Color, PrintStyledContent, Stylize};
+use crossterm::style::{Color, Print, PrintStyledContent, Stylize};
 use crossterm::QueueableCommand;
 
 use crate::config::Config;
+use crate::utils::Rect;
 use crate::workspaces::{self, Workspace};
 use crate::{terminal, utils};
 
@@ -33,6 +35,7 @@ impl App {
         area.x = area.width / 2;
         area.y = area.height / 2;
 
+        self.key_binding_line(&area)?;
         // To make the list scrollable we need to calculate the starting index
         // The starting index is the index of the first element that we want to show in the list
         let starting_index = if self.selected_workspace >= (area.height as usize - 1) {
@@ -68,6 +71,16 @@ impl App {
         }
 
         stdout().flush()?;
+
+        Ok(())
+    }
+
+    fn key_binding_line(&self, area: &Rect) -> Result<(), IOError> {
+        stdout().queue(MoveTo(area.x, area.y - 1))?;
+
+        stdout().queue(Print("Quit: q".on(Color::White).with(Color::Black)))?;
+        stdout().queue(Print(String::from(" | ")))?;
+        stdout().queue(Print("Enter workspace: <enter>".on(Color::White).with(Color::Black)))?;
 
         Ok(())
     }
