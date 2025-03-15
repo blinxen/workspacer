@@ -41,3 +41,9 @@ Example workspaces file:
 ```
 
 Invalid file paths are ignored.
+
+License
+-------
+
+The source code is primarily distributed under the terms of the MIT License.
+See LICENSE for details.
