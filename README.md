@@ -5,11 +5,13 @@ Workspacer is a workspace manager for the terminal.
 It was inspired by [telescope-project.nvim](https://github.com/nvim-telescope/telescope-project.nvim)
 but without the requirement on a specific terminal editor.
 
-Build
------
+Installation
+------------
+
+### Release tarball
 
 ```bash
-cargo build --release
+wget https://github.com/blinxen/workspacer/releases/download/$VERSION/tomli.tar.gz
 ```
 
 Configuration
