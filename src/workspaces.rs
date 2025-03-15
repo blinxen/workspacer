@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fs::OpenOptions;
+use std::io::Error as IOError;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
@@ -38,10 +39,7 @@ pub fn read_workspaces(path: &str) -> Vec<Workspace> {
     workspaces
 }
 
-pub fn exec_workspace(
-    config: &Config,
-    workspace: Option<&Workspace>,
-) -> Result<(), std::io::Error> {
+pub fn exec_workspace(config: &Config, workspace: Option<&Workspace>) -> Result<(), IOError> {
     if let Some(workspace) = workspace {
         terminal::restore_terminal()?;
         if let Err(error) = Command::new(&config.command)

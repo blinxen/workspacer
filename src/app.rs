@@ -1,4 +1,4 @@
-use std::io::{stdout, Write};
+use std::io::{stdout, Error as IOError, Write};
 
 use crossterm::event::KeyCode;
 use crossterm::style::{Color, PrintStyledContent, Stylize};
@@ -26,7 +26,7 @@ impl App {
         }
     }
 
-    pub fn render(&self) -> Result<(), std::io::Error> {
+    pub fn render(&self) -> Result<(), IOError> {
         let mut area = terminal::size()?;
         area.width /= 2;
         area.height /= 2;

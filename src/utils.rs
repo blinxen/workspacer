@@ -2,6 +2,7 @@ use crossterm::cursor::{MoveTo, MoveToColumn, MoveToNextLine};
 use crossterm::style::{Color, PrintStyledContent, SetForegroundColor, Stylize};
 use crossterm::{cursor, QueueableCommand};
 use std::io::stdout;
+use std::io::Error as IOError;
 use std::io::Write;
 
 // A Rect is a description of an area where:
@@ -18,7 +19,7 @@ pub struct Rect {
 
 // Draw border on a specific area
 // Widget can use this function to draw borders
-pub fn border(area: &Rect, title: &str) -> Result<(), std::io::Error> {
+pub fn border(area: &Rect, title: &str) -> Result<(), IOError> {
     let first_line = build_border_line('┌', '┐', '─', area.width);
     let last_line = build_border_line('└', '┘', '─', area.width);
 
@@ -75,7 +76,7 @@ pub fn build_line(content: &str, line_length: usize) -> String {
 
 // Go to the next line in a specific area
 // x_offset can be set to allow moving on the X axis after the new line has been inserted
-pub fn go_to_next_line_in_area(area: &Rect, x_offset: u16) -> Result<(), std::io::Error> {
+pub fn go_to_next_line_in_area(area: &Rect, x_offset: u16) -> Result<(), IOError> {
     stdout().queue(MoveToNextLine(1))?;
     stdout().queue(MoveToColumn(area.x + x_offset))?;
 
@@ -83,7 +84,7 @@ pub fn go_to_next_line_in_area(area: &Rect, x_offset: u16) -> Result<(), std::io
 }
 
 // Place cursor at the top left corner of an area
-pub fn reset_cursor_in_area(area: &Rect) -> Result<(), std::io::Error> {
+pub fn reset_cursor_in_area(area: &Rect) -> Result<(), IOError> {
     stdout().queue(MoveTo(area.x, area.y))?;
     Ok(())
 }
