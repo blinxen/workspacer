@@ -29,14 +29,11 @@ impl Config {
         if let Ok(config_file) = OpenOptions::new().read(true).open(config_file_path) {
             let file = BufReader::new(config_file);
             for line in file.lines().map_while(Result::ok) {
-                let mut split = line.split('=');
-                if let Some("command") = split.next() {
-                    if let Some(command) = split.next() {
-                        config.command = command.to_string();
-                    }
-                } else if let Some("workspaces") = split.next() {
-                    if let Some(workspaces_path) = split.next() {
-                        config.workspaces = workspaces_path.to_string();
+                if let Some((key, value)) = line.split_once('=') {
+                    match key.trim() {
+                        "command" => config.command = value.trim().to_string(),
+                        "workspaces" => config.workspaces = value.trim().to_string(),
+                        _ => {}
                     }
                 }
             }
