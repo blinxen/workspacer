@@ -78,9 +78,9 @@ impl App {
     fn key_binding_line(&self, area: &Rect) -> Result<(), IOError> {
         stdout().queue(MoveTo(area.x, area.y - 1))?;
 
-        stdout().queue(Print("Quit: q".on(Color::White).with(Color::Black)))?;
+        stdout().queue(Print("q: Quit".on(Color::White).with(Color::Black)))?;
         stdout().queue(Print(String::from(" | ")))?;
-        stdout().queue(Print("Enter workspace: <enter>".on(Color::White).with(Color::Black)))?;
+        stdout().queue(Print("<enter>: Enter workspace".on(Color::White).with(Color::Black)))?;
 
         Ok(())
     }
