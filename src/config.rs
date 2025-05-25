@@ -1,6 +1,6 @@
 use std::{
-    fs::{self, OpenOptions},
-    io::{BufRead, BufReader, Write},
+    fs::OpenOptions,
+    io::{BufRead, BufReader},
     path::PathBuf,
 };
 
@@ -25,32 +25,6 @@ impl Config {
                 .to_string_lossy()
                 .to_string(),
         };
-
-        if !config_directory.exists() || !config_file_path.exists() {
-            let _ = fs::create_dir(&config_directory);
-            if config_directory.exists() {
-                if let Ok(mut config_file) = OpenOptions::new()
-                    .create(true)
-                    .truncate(true)
-                    .write(true)
-                    .open(&config_file_path)
-                {
-                    if config_file
-                        .write_all(
-                            format!(
-                                "command={}\nworkspaces={}\n",
-                                config.command, config.workspaces
-                            )
-                            .as_bytes(),
-                        )
-                        .is_err()
-                    {
-                        // TODO: Create an actual log line to print this into
-                        // eprintln!("Could not create default configuration");
-                    }
-                };
-            }
-        }
 
         if let Ok(config_file) = OpenOptions::new().read(true).open(config_file_path) {
             let file = BufReader::new(config_file);
