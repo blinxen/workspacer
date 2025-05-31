@@ -1,4 +1,5 @@
 use std::io::{stdout, Error as IOError, Write};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crossterm::cursor::MoveTo;
 use crossterm::event::KeyCode;
@@ -14,6 +15,8 @@ pub struct App {
     workspaces: Vec<Workspace>,
     config: Config,
     selected_workspace: usize,
+    error_line: String,
+    error_line_reset_time: Duration,
     pub quit: bool,
 }
 
@@ -24,8 +27,17 @@ impl App {
             workspaces: workspaces::read_workspaces(&config.workspaces),
             config,
             selected_workspace: 0,
+            error_line: String::new(),
+            error_line_reset_time: Duration::new(0, 0),
             quit: false,
         }
+    }
+
+    fn log_error(&mut self, error: &str) {
+        self.error_line_reset_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(Duration::new(0, 0)) + Duration::from_secs(5);
+        self.error_line.push_str(error);
     }
 
     pub fn render(&self) -> Result<(), IOError> {
@@ -70,6 +82,14 @@ impl App {
             stdout().queue(PrintStyledContent(styled_workspace))?;
         }
 
+        // Draw error line
+        utils::go_to_next_line_in_area(&area, 0)?;
+        stdout().queue(MoveTo(area.x, area.y + area.height + 1))?;
+        if !self.error_line.is_empty() {
+            stdout().queue(Print("Error: ".with(Color::Red)))?;
+            stdout().queue(Print(self.error_line.clone().with(Color::Red)))?;
+        }
+
         stdout().flush()?;
 
         Ok(())
@@ -91,13 +111,7 @@ impl App {
             KeyCode::Enter => {
                 let workspace = self.workspaces.get(self.selected_workspace);
                 if let Err(error) = workspaces::exec_workspace(&self.config, workspace) {
-                    eprintln!(
-                        "An error occured while executing \"{}\" with workspace \"{}\"",
-                        self.config.command,
-                        workspace.unwrap_or(&Workspace::default())
-                    );
-                    eprintln!("{}", error);
-                    std::process::exit(1);
+                    self.log_error(&error.to_string());
                 };
             }
             KeyCode::Up => {
@@ -120,6 +134,12 @@ impl App {
                 }
             }
             _ => {}
+        }
+
+        if self.error_line_reset_time < SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("ERROR REAEDING SYSTEM TIME") {
+            self.error_line.clear();
         }
     }
 }

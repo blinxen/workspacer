@@ -42,16 +42,9 @@ pub fn read_workspaces(path: &str) -> Vec<Workspace> {
 pub fn exec_workspace(config: &Config, workspace: Option<&Workspace>) -> Result<(), IOError> {
     if let Some(workspace) = workspace {
         terminal::restore_terminal()?;
-        if let Err(error) = Command::new(&config.command)
+        Command::new(&config.command)
             .current_dir(&workspace.path)
-            .status()
-        {
-            eprintln!(
-                "Could not execute command {} with workspace {}",
-                &config.command, &workspace.path
-            );
-            eprintln!("{}", error);
-        }
+            .status()?;
         terminal::prepare_terminal()?;
     }
 
