@@ -1,12 +1,14 @@
-use std::{
-    fs::OpenOptions,
-    io::{BufRead, BufReader},
-    path::PathBuf,
-};
+use std::io::BufReader;
+use std::fs::OpenOptions;
+use std::io::BufRead;
+use std::path::PathBuf;
+use std::process::Command;
 
 pub struct Config {
-    // Command to call after a project was selected
+    // Command to execute after a project was selected
     pub command: String,
+    // Edit command that will be executed to edit the workspaces file
+    edit_command: String,
     // Path to the workspaces file that contains all workspaces
     pub workspaces: String,
 }
@@ -20,6 +22,7 @@ impl Config {
         let config_file_path = home.join(".config/workspacer/config");
         let mut config = Config {
             command: String::from("/usr/bin/vim"),
+            edit_command: String::from("/usr/bin/vim"),
             workspaces: config_directory
                 .join("workspaces")
                 .to_string_lossy()
@@ -33,6 +36,7 @@ impl Config {
                     match key.trim() {
                         "command" => config.command = value.trim().to_string(),
                         "workspaces" => config.workspaces = value.trim().to_string(),
+                        "edit_command" => config.edit_command = value.trim().to_string(),
                         _ => {}
                     }
                 }
@@ -40,5 +44,12 @@ impl Config {
         };
 
         config
+    }
+
+    pub fn edit_workspaces(&self) -> bool {
+        Command::new(&self.edit_command)
+            .arg(&self.workspaces)
+            .status()
+            .is_ok()
     }
 }

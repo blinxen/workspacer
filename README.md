@@ -21,6 +21,7 @@ The configuration file is held very minimal and looks like this:
 
 ```
 command=/usr/bin/vim
+edit_command=/usr/bin/vim
 workspaces=/home/foo/.config/workspacer/workspaces
 ```
 
@@ -28,6 +29,9 @@ Each configuration option is written on a single line.
 The equals sign (`=`) is used to separate the configuration from its value.
 
 By default, `vim` is called once a project is selected.
+
+*NOTE*: Command paths don't have to be absolute or relative paths.
+They can be anything that is found under `PATH` too.
 
 ### Workspaces
 

@@ -101,6 +101,8 @@ impl App {
         stdout().queue(Print("q: Quit".on(Color::White).with(Color::Black)))?;
         stdout().queue(Print(String::from(" | ")))?;
         stdout().queue(Print("<enter>: Enter workspace".on(Color::White).with(Color::Black)))?;
+        stdout().queue(Print(String::from(" | ")))?;
+        stdout().queue(Print("e: Edit workspaces".on(Color::White).with(Color::Black)))?;
 
         Ok(())
     }
@@ -113,6 +115,13 @@ impl App {
                 if let Err(error) = workspaces::exec_workspace(&self.config, workspace) {
                     self.log_error(&error.to_string());
                 };
+            }
+            KeyCode::Char('e') => {
+                if self.config.edit_workspaces() {
+                    self.workspaces = workspaces::read_workspaces(&self.config.workspaces);
+                } else {
+                    self.log_error("Could not open / save workspaces file");
+                }
             }
             KeyCode::Up => {
                 if self.workspaces.len() > 1 {
