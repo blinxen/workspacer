@@ -1,15 +1,11 @@
-use std::io::{stdout, Error as IOError, Write};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
-use crossterm::cursor::MoveTo;
-use crossterm::event::KeyCode;
-use crossterm::style::{Color, Print, PrintStyledContent, Stylize};
-use crossterm::QueueableCommand;
-
+use crate::buffer::Buffer;
 use crate::config::Config;
-use crate::utils::Rect;
 use crate::workspaces::{self, Workspace};
 use crate::{terminal, utils};
+use crossterm::event::KeyCode;
+use crossterm::style::{ContentStyle, Stylize};
+use std::io::Error as IOError;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub struct App {
     workspaces: Vec<Workspace>,
@@ -17,6 +13,7 @@ pub struct App {
     selected_workspace: usize,
     error_line: String,
     error_line_reset_time: Duration,
+    buffer: Buffer,
     pub quit: bool,
 }
 
@@ -29,6 +26,7 @@ impl App {
             selected_workspace: 0,
             error_line: String::new(),
             error_line_reset_time: Duration::new(0, 0),
+            buffer: Buffer::new(terminal::size()),
             quit: false,
         }
     }
@@ -36,75 +34,44 @@ impl App {
     fn log_error(&mut self, error: &str) {
         self.error_line_reset_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap_or(Duration::new(0, 0)) + Duration::from_secs(5);
+            .unwrap_or(Duration::new(0, 0))
+            + Duration::from_secs(5);
         self.error_line.push_str(error);
     }
 
-    pub fn render(&self) -> Result<(), IOError> {
-        let mut area = terminal::size()?;
-        area.width /= 2;
-        area.height /= 2;
-        area.x = area.width / 2;
-        area.y = area.height / 2;
+    pub fn render(&mut self) -> Result<(), IOError> {
+        self.buffer.resize(terminal::size());
 
-        self.key_binding_line(&area)?;
-        // To make the list scrollable we need to calculate the starting index
-        // The starting index is the index of the first element that we want to show in the list
-        let starting_index = if self.selected_workspace >= (area.height as usize - 1) {
-            self.selected_workspace
-                .saturating_sub(area.height as usize - 1)
-                + 1
-        } else {
-            self.selected_workspace
-                .saturating_sub(area.height as usize - 1)
-        };
-
-        utils::border(&area, "WORKSPACER")?;
-        let workspaces_to_render = self
-            .workspaces
-            .iter()
-            .enumerate()
-            .filter(|&(i, _)| i >= starting_index)
-            .take(area.height as usize - 1);
+        // Draw border
+        utils::border(
+            &mut self.buffer,
+            "WORKSPACER",
+            Some(
+                "q: Quit | <enter>: Enter workspace | e: Edit workspaces"
+                    .black()
+                    .on_white(),
+            ),
+            Some(self.error_line.as_str().red()),
+        );
 
         // Draw workspaces
-        utils::reset_cursor_in_area(&area)?;
-        for (index, workspace) in workspaces_to_render {
-            utils::go_to_next_line_in_area(&area, 1)?;
-            let mut styled_workspace = utils::build_line(
-                &format!("{} <{}>", workspace.title, workspace.path),
-                (area.width - 2) as usize,
-            )
-            .stylize();
-            if index == self.selected_workspace {
-                styled_workspace = styled_workspace.on(Color::White).with(Color::Black);
-            }
-            stdout().queue(PrintStyledContent(styled_workspace))?;
+        for (index, workspace) in self.workspaces_to_render() {
+            self.buffer.write_str(
+                &utils::build_line(
+                    format!("{} <{}>", workspace.title, workspace.path),
+                    self.buffer.area.width as usize - 2,
+                ),
+                self.buffer.area.x + 1,
+                self.buffer.area.y + index as u16 + 2,
+                if index == self.selected_workspace {
+                    ContentStyle::default().black().on_white()
+                } else {
+                    ContentStyle::default().reset()
+                },
+            );
         }
 
-        // Draw error line
-        utils::go_to_next_line_in_area(&area, 0)?;
-        stdout().queue(MoveTo(area.x, area.y + area.height + 1))?;
-        if !self.error_line.is_empty() {
-            stdout().queue(Print("Error: ".with(Color::Red)))?;
-            stdout().queue(Print(self.error_line.clone().with(Color::Red)))?;
-        }
-
-        stdout().flush()?;
-
-        Ok(())
-    }
-
-    fn key_binding_line(&self, area: &Rect) -> Result<(), IOError> {
-        stdout().queue(MoveTo(area.x, area.y - 1))?;
-
-        stdout().queue(Print("q: Quit".on(Color::White).with(Color::Black)))?;
-        stdout().queue(Print(String::from(" | ")))?;
-        stdout().queue(Print("<enter>: Enter workspace".on(Color::White).with(Color::Black)))?;
-        stdout().queue(Print(String::from(" | ")))?;
-        stdout().queue(Print("e: Edit workspaces".on(Color::White).with(Color::Black)))?;
-
-        Ok(())
+        self.buffer.flush()
     }
 
     pub fn handle_key_event(&mut self, code: KeyCode) {
@@ -145,10 +112,34 @@ impl App {
             _ => {}
         }
 
-        if self.error_line_reset_time < SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("ERROR REAEDING SYSTEM TIME") {
+        if self.error_line_reset_time
+            < SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("ERROR REAEDING SYSTEM TIME")
+        {
             self.error_line.clear();
         }
+    }
+
+    fn workspaces_to_render(&self) -> Vec<(usize, Workspace)> {
+        // To make the list scrollable we need to calculate the starting index
+        // The starting index is the index of the first element that we want to show in the list
+        let starting_index = if self.selected_workspace >= (self.buffer.area.height as usize - 1) {
+            self.selected_workspace
+                .saturating_sub(self.buffer.area.height as usize - 1)
+                + 1
+        } else {
+            self.selected_workspace
+                .saturating_sub(self.buffer.area.height as usize - 1)
+        };
+
+        self.workspaces
+            // TODO: I don't like the clone here
+            .clone()
+            .into_iter()
+            .enumerate()
+            .filter(|&(i, _)| i >= starting_index)
+            .take(self.buffer.area.height as usize - 1)
+            .collect()
     }
 }

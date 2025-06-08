@@ -7,7 +7,7 @@ use std::process::Command;
 
 use crate::{config::Config, terminal};
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Workspace {
     pub title: String,
     pub path: String,

@@ -32,13 +32,15 @@ pub fn restore_terminal() -> Result<(), IOError> {
 }
 
 // Return the terminal size as a Rect
-pub fn size() -> Result<Rect, IOError> {
-    let (x, y) = terminal::size()?;
+pub fn size() -> Rect {
+    let (width, height) = terminal::size().expect("Could not determine terminal size");
+    let app_width = width / 2;
+    let app_height = height / 2;
 
-    Ok(Rect {
-        x: 0,
-        y: 0,
-        width: x,
-        height: y,
-    })
+    Rect {
+        x: (width - app_width) / 2,
+        y: (height - app_height) / 2,
+        width: app_width,
+        height: app_height,
+    }
 }
