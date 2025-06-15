@@ -79,9 +79,11 @@ impl App {
             KeyCode::Char('q') => self.quit = true,
             KeyCode::Enter => {
                 let workspace = self.workspaces.get(self.selected_workspace);
+                terminal::restore_terminal()?;
                 if let Err(error) = workspaces::exec_workspace(&self.config, workspace) {
                     self.log_error(&error.to_string());
                 };
+                terminal::prepare_terminal()?;
             }
             KeyCode::Char('e') => {
                 terminal::restore_terminal()?;

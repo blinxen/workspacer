@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::Command;
 
-use crate::{config::Config, terminal};
+use crate::config::Config;
 
 #[derive(Clone, Debug, Default)]
 pub struct Workspace {
@@ -41,11 +41,9 @@ pub fn read_workspaces(path: &str) -> Vec<Workspace> {
 
 pub fn exec_workspace(config: &Config, workspace: Option<&Workspace>) -> Result<(), IOError> {
     if let Some(workspace) = workspace {
-        terminal::restore_terminal()?;
         Command::new(&config.command)
             .current_dir(&workspace.path)
             .status()?;
-        terminal::prepare_terminal()?;
     }
 
     Ok(())
