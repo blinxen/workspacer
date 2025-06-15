@@ -6,24 +6,9 @@ use crossterm::{
 };
 use std::io::{stdout, Stdout, Write};
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Cell {
-    pub character: char,
-    pub style: ContentStyle,
-}
-
-impl Default for Cell {
-    fn default() -> Self {
-        Cell {
-            character: ' ',
-            style: ContentStyle::default(),
-        }
-    }
-}
-
 pub struct Buffer {
-    current: Vec<Vec<Cell>>,
-    previous: Vec<Vec<Cell>>,
+    current: Vec<Vec<StyledContent<char>>>,
+    previous: Vec<Vec<StyledContent<char>>>,
     stdout: Stdout,
     pub area: Rect,
 }
@@ -68,13 +53,10 @@ impl Buffer {
         (x, y)
     }
 
-    pub fn write_str(&mut self, str: &str, x: u16, y: u16, style: ContentStyle) {
+    pub fn write_string(&mut self, x: u16, y: u16, content: StyledContent<String>) {
         let (x, y) = self.relative_cell_position(x, y);
-        for (i, char) in str.chars().enumerate() {
-            self.current[y as usize][x as usize + i] = Cell {
-                character: char,
-                style,
-            };
+        for (i, char) in content.content().chars().enumerate() {
+            self.current[y as usize][x as usize + i] = StyledContent::new(*content.style(), char);
         }
     }
 
@@ -86,10 +68,7 @@ impl Buffer {
                         column as u16 + self.area.x,
                         row as u16 + self.area.y,
                     ))?;
-                    self.stdout.queue(PrintStyledContent(StyledContent::new(
-                        cell.style,
-                        cell.character,
-                    )))?;
+                    self.stdout.queue(PrintStyledContent(*cell))?;
                 }
             }
         }

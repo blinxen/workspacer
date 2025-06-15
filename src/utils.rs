@@ -1,5 +1,5 @@
 use crate::buffer::Buffer;
-use crossterm::style::{ContentStyle, StyledContent, Stylize};
+use crossterm::style::{StyledContent, Stylize};
 
 // A Rect is a description of an area where:
 // * x and y are the coordinates for the top left corner
@@ -15,9 +15,9 @@ pub struct Rect {
 
 pub fn border(
     buffer: &mut Buffer,
-    title: &str,
-    header: Option<StyledContent<&str>>,
-    footer: Option<StyledContent<&str>>,
+    title: String,
+    header: Option<StyledContent<String>>,
+    footer: Option<StyledContent<String>>,
 ) {
     let first_line = build_border_line('┌', '┐', '─', buffer.area.width);
     let last_line = build_border_line('└', '┘', '─', buffer.area.width);
@@ -27,57 +27,46 @@ pub fn border(
 
     // Draw Header
     if let Some(header) = header {
-        buffer.write_str(
-            header.content(),
-            buffer.area.x,
-            buffer.area.y,
-            *header.style(),
-        );
+        buffer.write_string(buffer.area.x, buffer.area.y, header);
     }
 
     // Draw first line with nice curves
-    buffer.write_str(
-        &first_line,
+    buffer.write_string(
         buffer.area.x,
         buffer.area.y + top_offset,
-        ContentStyle::default().yellow(),
+        first_line.yellow(),
     );
-    buffer.write_str(
-        title,
+    buffer.write_string(
         buffer.area.x + ((buffer.area.width / 2) - title.len() as u16),
         buffer.area.y + top_offset,
-        ContentStyle::default().bold(),
+        title.bold(),
     );
     // Draw vertical lines only on the left most and right most column
     for i in 1..buffer.area.height - top_offset - bottom_offset {
-        buffer.write_str(
-            "│",
+        buffer.write_string(
             buffer.area.x,
             buffer.area.y + top_offset + i,
-            ContentStyle::default().yellow(),
+            String::from("│").yellow(),
         );
-        buffer.write_str(
-            "│",
+        buffer.write_string(
             buffer.area.x + buffer.area.width - 1,
             buffer.area.y + top_offset + i,
-            ContentStyle::default().yellow(),
+            String::from("│").yellow(),
         );
     }
     // Draw last line with nice curves
-    buffer.write_str(
-        &last_line,
+    buffer.write_string(
         buffer.area.x,
         buffer.area.y + buffer.area.height - 1 - bottom_offset,
-        ContentStyle::default().yellow(),
+        last_line.yellow(),
     );
 
     // Draw footer
     if let Some(footer) = footer {
-        buffer.write_str(
-            footer.content(),
+        buffer.write_string(
             buffer.area.x,
             buffer.area.y + buffer.area.height - 1,
-            *footer.style(),
+            footer,
         );
     }
 }

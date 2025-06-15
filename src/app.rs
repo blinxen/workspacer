@@ -3,7 +3,7 @@ use crate::config::Config;
 use crate::workspaces::{self, Workspace};
 use crate::{terminal, utils};
 use crossterm::event::KeyCode;
-use crossterm::style::{ContentStyle, Stylize};
+use crossterm::style::{ContentStyle, StyledContent, Stylize};
 use std::io::Error as IOError;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -45,29 +45,32 @@ impl App {
         // Draw border
         utils::border(
             &mut self.buffer,
-            "WORKSPACER",
+            String::from("WORKSPACER"),
             Some(
-                "q: Quit | <enter>: Enter workspace | e: Edit workspaces"
+                String::from("q: Quit | <enter>: Enter workspace | e: Edit workspaces")
                     .black()
                     .on_white(),
             ),
-            Some(self.error_line.as_str().red()),
+            Some(self.error_line.clone().red()),
         );
 
         // Draw workspaces
         for (index, workspace) in self.workspaces_to_render() {
-            self.buffer.write_str(
-                &utils::build_line(
-                    format!("{} <{}>", workspace.title, workspace.path),
-                    self.buffer.area.width as usize - 2,
-                ),
+            let style = if index == self.selected_workspace {
+                ContentStyle::default().black().on_white()
+            } else {
+                ContentStyle::default().reset()
+            };
+            self.buffer.write_string(
                 self.buffer.area.x + 1,
                 self.buffer.area.y + index as u16 + 2,
-                if index == self.selected_workspace {
-                    ContentStyle::default().black().on_white()
-                } else {
-                    ContentStyle::default().reset()
-                },
+                StyledContent::new(
+                    style,
+                    utils::build_line(
+                        format!("{} <{}>", workspace.title, workspace.path),
+                        self.buffer.area.width as usize - 2,
+                    ),
+                ),
             );
         }
 
