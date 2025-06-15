@@ -17,8 +17,8 @@ impl Buffer {
     // Create a buffer that has only empty cells
     pub fn new(area: Rect) -> Self {
         Buffer {
-            current: vec![vec![Cell::default(); area.width as usize]; area.height as usize],
-            previous: vec![vec![Cell::default(); area.width as usize]; area.height as usize],
+            current: Buffer::init_buffer(area.height, area.width),
+            previous: Buffer::init_buffer(area.height, area.width),
             stdout: stdout(),
             area,
         }
@@ -29,8 +29,15 @@ impl Buffer {
             return;
         }
         self.area = area.clone();
-        self.previous = vec![vec![Cell::default(); area.width as usize]; area.height as usize];
-        self.current = vec![vec![Cell::default(); area.width as usize]; area.height as usize];
+        self.previous = Buffer::init_buffer(self.area.height, self.area.width);
+        self.current = Buffer::init_buffer(self.area.height, self.area.width);
+    }
+
+    fn init_buffer(rows: u16, columns: u16) -> Vec<Vec<StyledContent<char>>> {
+        vec![
+            vec![StyledContent::new(ContentStyle::default(), ' '); columns as usize];
+            rows as usize
+        ]
     }
 
     fn relative_cell_position(&self, x: u16, y: u16) -> (u16, u16) {
