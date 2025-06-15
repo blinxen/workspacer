@@ -74,7 +74,7 @@ impl App {
         self.buffer.flush()
     }
 
-    pub fn handle_key_event(&mut self, code: KeyCode) {
+    pub fn handle_key_event(&mut self, code: KeyCode) -> Result<(), IOError> {
         match code {
             KeyCode::Char('q') => self.quit = true,
             KeyCode::Enter => {
@@ -84,11 +84,13 @@ impl App {
                 };
             }
             KeyCode::Char('e') => {
+                terminal::restore_terminal()?;
                 if self.config.edit_workspaces() {
                     self.workspaces = workspaces::read_workspaces(&self.config.workspaces);
                 } else {
                     self.log_error("Could not open / save workspaces file");
                 }
+                terminal::prepare_terminal()?;
             }
             KeyCode::Up => {
                 if self.workspaces.len() > 1 {
@@ -119,6 +121,8 @@ impl App {
         {
             self.error_line.clear();
         }
+
+        Ok(())
     }
 
     fn workspaces_to_render(&self) -> Vec<(usize, Workspace)> {
