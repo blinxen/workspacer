@@ -11,7 +11,7 @@ Installation
 ### Release tarball
 
 ```bash
-wget https://github.com/blinxen/workspacer/releases/download/$VERSION/tomli.tar.gz
+wget https://github.com/blinxen/workspacer/releases/download/$VERSION/workspacer.tar.gz
 ```
 
 Configuration
@@ -32,6 +32,12 @@ By default, `vim` is called once a project is selected.
 
 *NOTE*: Command paths don't have to be absolute or relative paths.
 They can be anything that is found under `PATH` too.
+
+### Configuration options
+
+* `command`: Command that should be executed on a workspace when `<ENTER>` key was pressed
+* `edit_command`: Command that should be used to open and edit the workspaces file
+* `workspaces`: Path to the workspaces file
 
 ### Workspaces
 
