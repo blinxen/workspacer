@@ -5,7 +5,7 @@ use crossterm::style::{StyledContent, Stylize};
 // * x and y are the coordinates for the top left corner
 // * width is the max value that x can get to
 // * height is the max value that y can get to
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rect {
     pub x: u16,
     pub y: u16,

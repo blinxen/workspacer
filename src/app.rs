@@ -46,11 +46,7 @@ impl App {
         utils::border(
             &mut self.buffer,
             String::from("WORKSPACER"),
-            Some(
-                String::from("q: Quit | <enter>: Enter workspace | e: Edit workspaces")
-                    .black()
-                    .on_white(),
-            ),
+            None,
             Some(self.error_line.clone().red()),
         );
 
@@ -63,7 +59,7 @@ impl App {
             };
             self.buffer.write_string(
                 self.buffer.area.x + 1,
-                self.buffer.area.y + index as u16 + 2,
+                self.buffer.area.y + index as u16 + 1,
                 StyledContent::new(
                     style,
                     utils::build_line(
@@ -72,6 +68,20 @@ impl App {
                     ),
                 ),
             );
+        }
+
+        let key_bindings = vec!["[q] Quit", "[<ENTER>] Enter workspace", "[e] Edit workspaces"];
+        let mut start = self.buffer.area.x + (self.buffer.area.width / 4);
+        for (index, key) in key_bindings.iter().enumerate() {
+            self.buffer.write_string(
+                start,
+                self.buffer.area.y + self.buffer.area.height - 1,
+                StyledContent::new(
+                    ContentStyle::default().white(),
+                    String::from(*key)
+                ),
+            );
+            start += key.len() as u16 + index as u16 + 2;
         }
 
         self.buffer.flush()
