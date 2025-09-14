@@ -2,7 +2,7 @@
 %bcond_with check
 
 Name:           workspacer
-Version:        0.3.0
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        Terminal workspace manager used with terminal editors
 # Apache-2.0 OR MIT
@@ -43,5 +43,8 @@ Terminal workspace manager used with terminal editors like neovim or helix
 %endif
 
 %changelog
+* Sun Sep 14 2025 blinxen <h-k-81@hotmail.com> - 0.4.0-1
+- Update to version 0.4.0
+- Add fuzzy search for filtering workspaces
 * Fri Aug 15 2025 blinxen <h-k-81@hotmail.com> - 0.3.0-1
 - Initial package
