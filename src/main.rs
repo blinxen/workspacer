@@ -26,8 +26,11 @@ fn main() -> Result<(), std::io::Error> {
         }
 
         app.render()?;
-        if let Event::Key(KeyEvent { code, .. }) = event::read()? {
-            app.handle_key_event(code)?;
+        if let Event::Key(KeyEvent {
+            code, modifiers, ..
+        }) = event::read()?
+        {
+            app.handle_key_event(code, modifiers)?;
         }
     }
     terminal::restore_terminal()?;

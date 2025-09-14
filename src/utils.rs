@@ -1,11 +1,11 @@
 use crate::buffer::Buffer;
-use crossterm::style::{StyledContent, Stylize};
+use crossterm::style::{Color, StyledContent, Stylize};
 
 // A Rect is a description of an area where:
 // * x and y are the coordinates for the top left corner
 // * width is the max value that x can get to
 // * height is the max value that y can get to
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq)]
 pub struct Rect {
     pub x: u16,
     pub y: u16,
@@ -13,61 +13,60 @@ pub struct Rect {
     pub width: u16,
 }
 
+// Draw border on a specific area
+// Widget can use this function to draw borders
 pub fn border(
     buffer: &mut Buffer,
+    // TODO: Maybe we should pass a mutable reference here because the buffer will make the area
+    // smaller. This function can update the area with the new boundries
+    area: &Rect,
+    focused: bool,
     title: String,
     header: Option<StyledContent<String>>,
     footer: Option<StyledContent<String>>,
 ) {
-    let first_line = build_border_line('┌', '┐', '─', buffer.area.width);
-    let last_line = build_border_line('└', '┘', '─', buffer.area.width);
+    let line_color = if focused { Color::Yellow } else { Color::Reset };
+    let first_line = build_border_line('┌', '┐', '─', area.width);
+    let last_line = build_border_line('└', '┘', '─', area.width);
     // Add offset if header or footer is defined to make everything fit
     let top_offset = if header.is_some() { 1 } else { 0 };
     let bottom_offset = if footer.is_some() { 1 } else { 0 };
 
     // Draw Header
     if let Some(header) = header {
-        buffer.write_string(buffer.area.x, buffer.area.y, header);
+        buffer.write_string(area.x, area.y, header);
     }
 
     // Draw first line with nice curves
+    buffer.write_string(area.x, area.y + top_offset, first_line.with(line_color));
     buffer.write_string(
-        buffer.area.x,
-        buffer.area.y + top_offset,
-        first_line.yellow(),
-    );
-    buffer.write_string(
-        buffer.area.x + ((buffer.area.width / 2) - title.len() as u16),
-        buffer.area.y + top_offset,
+        area.x + ((area.width / 2) - title.len() as u16),
+        area.y + top_offset,
         title.bold(),
     );
     // Draw vertical lines only on the left most and right most column
-    for i in 1..buffer.area.height - top_offset - bottom_offset {
+    for i in 1..area.height - top_offset - bottom_offset {
         buffer.write_string(
-            buffer.area.x,
-            buffer.area.y + top_offset + i,
-            String::from("│").yellow(),
+            area.x,
+            area.y + top_offset + i,
+            String::from("│").with(line_color),
         );
         buffer.write_string(
-            buffer.area.x + buffer.area.width - 1,
-            buffer.area.y + top_offset + i,
-            String::from("│").yellow(),
+            area.x + area.width - 1,
+            area.y + top_offset + i,
+            String::from("│").with(line_color),
         );
     }
     // Draw last line with nice curves
     buffer.write_string(
-        buffer.area.x,
-        buffer.area.y + buffer.area.height - 1 - bottom_offset,
-        last_line.yellow(),
+        area.x,
+        area.y + area.height - 1 - bottom_offset,
+        last_line.with(line_color),
     );
 
     // Draw footer
     if let Some(footer) = footer {
-        buffer.write_string(
-            buffer.area.x,
-            buffer.area.y + buffer.area.height - 1,
-            footer,
-        );
+        buffer.write_string(area.x, area.y + area.height - 1, footer);
     }
 }
 
@@ -83,15 +82,15 @@ fn build_border_line(first: char, last: char, middle: char, length: u16) -> Stri
     line
 }
 
-// Helper method to build a line and fill it with whitespace if it does not fill the whole row
-pub fn build_line(content: String, line_length: usize) -> String {
+// Build a row that will be displayed in a container
+pub fn build_line(content: &str, line_length: usize, filler: &str) -> String {
     let mut line = String::new();
 
     if line.len() >= line_length {
         content[..line_length].clone_into(&mut line);
     } else {
-        line.push_str(&content);
-        line.push_str(&" ".repeat(line_length - content.len()));
+        line.push_str(content);
+        line.push_str(&filler.repeat(line_length - content.len()));
     }
 
     line

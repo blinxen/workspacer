@@ -1,12 +1,12 @@
 use crate::utils::Rect;
+use crossterm::{QueueableCommand, terminal};
 use crossterm::{
     cursor,
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use crossterm::{terminal, QueueableCommand};
-use std::io::{stdout, Error as IOError};
+use std::io::{Error as IOError, stdout};
 
 // Enable some terminal features that will be required for this app to work
 pub fn prepare_terminal() -> Result<(), IOError> {
@@ -16,6 +16,7 @@ pub fn prepare_terminal() -> Result<(), IOError> {
     // Alternate means that the current screen is restored after exiting the application
     execute!(stdout(), EnterAlternateScreen, EnableMouseCapture)?;
     stdout().queue(cursor::Hide)?;
+    stdout().queue(cursor::SetCursorStyle::BlinkingBar)?;
 
     Ok(())
 }
@@ -26,6 +27,7 @@ pub fn restore_terminal() -> Result<(), IOError> {
     disable_raw_mode()?;
 
     execute!(stdout(), LeaveAlternateScreen, DisableMouseCapture)?;
+    stdout().queue(cursor::SetCursorStyle::DefaultUserShape)?;
     execute!(stdout(), cursor::Show)?;
 
     Ok(())

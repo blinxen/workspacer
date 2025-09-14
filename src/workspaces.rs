@@ -39,12 +39,10 @@ pub fn read_workspaces(path: &str) -> Vec<Workspace> {
     workspaces
 }
 
-pub fn exec_workspace(config: &Config, workspace: Option<&Workspace>) -> Result<(), IOError> {
-    if let Some(workspace) = workspace {
-        Command::new(&config.command)
-            .current_dir(&workspace.path)
-            .status()?;
-    }
+pub fn exec_workspace(config: &Config, workspace: &Workspace) -> Result<(), IOError> {
+    Command::new(&config.command)
+        .current_dir(&workspace.path)
+        .status()?;
 
     Ok(())
 }
