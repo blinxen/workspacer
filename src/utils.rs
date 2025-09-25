@@ -86,8 +86,9 @@ fn build_border_line(first: char, last: char, middle: char, length: u16) -> Stri
 pub fn build_line(content: &str, line_length: usize, filler: &str) -> String {
     let mut line = String::new();
 
-    if line.len() >= line_length {
-        content[..line_length].clone_into(&mut line);
+    if content.len() >= line_length {
+        content[..line_length - 3].clone_into(&mut line);
+        line.push_str(">>>");
     } else {
         line.push_str(content);
         line.push_str(&filler.repeat(line_length - content.len()));

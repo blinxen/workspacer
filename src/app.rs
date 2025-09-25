@@ -1,11 +1,10 @@
 use crate::buffer::Buffer;
 use crate::config::Config;
-use crate::utils::Rect;
 use crate::workspaces::{self, Workspace};
 use crate::{terminal, utils};
 use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::style::{ContentStyle, StyledContent, Stylize};
-use crossterm::{ExecutableCommand, QueueableCommand, cursor, execute};
+use crossterm::{ExecutableCommand, QueueableCommand, cursor};
 use nucleo::Nucleo;
 use nucleo::pattern::{CaseMatching, Normalization};
 use std::io::Error as IOError;
@@ -90,7 +89,14 @@ impl App {
         self.buffer.write_string(
             area.x + 1,
             search_line_y,
-            StyledContent::new(ContentStyle::default(), self.search_query.clone()),
+            StyledContent::new(
+                ContentStyle::default(),
+                self.search_query[self
+                    .search_query
+                    .len()
+                    .saturating_sub(area.width as usize - 2)..]
+                    .to_string(),
+            ),
         );
         top_line_offset += 1;
         self.buffer.write_string(
@@ -103,7 +109,9 @@ impl App {
         );
 
         // Draw workspaces
-        for (index, workspace) in self.workspaces_to_render(&area) {
+        for (index, workspace) in
+            self.workspaces_to_render((area.height - top_line_offset - 3) as usize)
+        {
             top_line_offset += 1;
             let style = if index == self.selected_workspace {
                 ContentStyle::default().black().on_white()
@@ -141,10 +149,14 @@ impl App {
         }
 
         self.buffer.flush()?;
-        self.buffer.stdout.execute(cursor::MoveTo(
-            area.x + 1 + self.search_query.len() as u16,
-            search_line_y,
-        ))?;
+        let cursor_position_x = if self.search_query.len() as u16 > area.width - 2 {
+            area.x + area.width - 1
+        } else {
+            area.x + 1 + self.search_query.len() as u16
+        };
+        self.buffer
+            .stdout
+            .execute(cursor::MoveTo(cursor_position_x, search_line_y))?;
         self.buffer.stdout.execute(cursor::Show)?;
 
         Ok(())
@@ -235,16 +247,13 @@ impl App {
         Ok(())
     }
 
-    fn workspaces_to_render(&self, area: &Rect) -> Vec<(usize, Workspace)> {
+    fn workspaces_to_render(&self, max_length: usize) -> Vec<(usize, Workspace)> {
         // To make the list scrollable we need to calculate the starting index
         // The starting index is the index of the first element that we want to show in the list
-        let starting_index = if self.selected_workspace >= (area.height as usize - 1) {
-            self.selected_workspace
-                .saturating_sub(area.height as usize - 1)
-                + 1
+        let starting_index = if self.selected_workspace >= (max_length) {
+            self.selected_workspace.saturating_sub(max_length) + 1
         } else {
-            self.selected_workspace
-                .saturating_sub(area.height as usize - 1)
+            self.selected_workspace.saturating_sub(max_length)
         };
 
         self.matcher
@@ -254,7 +263,7 @@ impl App {
             .map(|w| w.data.clone())
             .enumerate()
             .filter(|&(i, _)| i >= starting_index)
-            .take(area.height as usize - 1)
+            .take(max_length)
             .collect()
     }
 
